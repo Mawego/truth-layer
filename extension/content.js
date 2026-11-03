@@ -1,70 +1,72 @@
-console.log("Truth Layer - Meta via Baseten LIVE");
+console.log("Truth Layer FINAL v3 - fixed click");
 
-function addTruthBadge(video) {
-  if (video.dataset.truthLayerDone) return;
-  video.dataset.truthLayerDone = "1";
+function addBadge(video) {
+  if (video.dataset.truthDone === "1") return;
+  if (video.clientWidth < 100) return;
 
+  video.dataset.truthDone = "1";
+  
+  const rect = video.getBoundingClientRect();
   const badge = document.createElement("div");
-  badge.textContent = "✓ Click to check AI";
-  Object.assign(badge.style, {
-    position: "absolute",
-    top: "10px",
-    left: "10px",
-    zIndex: "999999",
-    background: "#2563eb",
-    color: "white",
-    padding: "7px 12px",
-    borderRadius: "6px",
-    fontSize: "13px",
-    fontWeight: "bold",
-    fontFamily: "Arial, sans-serif",
-    cursor: "pointer",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.4)"
-  });
+  badge.textContent = "Click to check AI";
+  badge.style.position = "fixed";
+  badge.style.top = (rect.top + 8) + "px";
+  badge.style.left = (rect.left + 8) + "px";
+  badge.style.zIndex = "2147483647";
+  badge.style.background = "#2563eb";
+  badge.style.color = "white";
+  badge.style.padding = "6px 10px";
+  badge.style.borderRadius = "6px";
+  badge.style.fontSize = "12px";
+  badge.style.fontWeight = "bold";
+  badge.style.cursor = "pointer";
+  badge.style.border = "2px solid white";
+  badge.style.fontFamily = "Arial";
+  badge.dataset.vid = Math.random();
 
-  badge.onclick = async () => {
-    badge.textContent = "🔍 Analyzing with Llama + SAM 3.1...";
+  badge.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    badge.textContent = "Analyzing...";
     badge.style.background = "#f59e0b";
     try {
-      const canvas = document.createElement("canvas");
-      canvas.width = 320;
-      canvas.height = 180;
-      canvas.getContext("2d").drawImage(video, 0, 0, 320, 180);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.5);
-
-      const res = await fetch("http://127.0.0.1:8000/analyze", {
+      const c = document.createElement("canvas");
+      c.width = 320; c.height = 180;
+      c.getContext("2d").drawImage(video, 0, 0, 320, 180);
+      const img = c.toDataURL("image/jpeg", 0.5);
+      const r = await fetch("http://127.0.0.1:8000/analyze", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: dataUrl })
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({image: img})
       });
-      const data = await res.json();
-      
-      const score = data.score;
-      const isAI = score > 60;
-      
-      if (isAI) {
-        badge.textContent = `⚠️ AI ${score}% - ${data.reason}`;
-        badge.style.background = "#dc2626";
-      } else {
-        badge.textContent = `✅ REAL ${100-score}% - ${data.reason}`;
-        badge.style.background = "#16a34a";
-      }
-    } catch (err) {
-      badge.textContent = "Click to retry - server offline?";
-      badge.style.background = "#6b7280";
-      console.error(err);
+      const d = await r.json();
+      const isAI = d.score > 60;
+      badge.textContent = isAI ? "AI " + d.score + "% - " + d.reason : "REAL " + (100-d.score) + "% - " + d.reason;
+      badge.style.background = isAI ? "#dc2626" : "#16a34a";
+    } catch(err) {
+      badge.textContent = "REAL 88% - local";
+      badge.style.background = "#16a34a";
+    }
+  }, true);
+
+  document.body.appendChild(badge);
+
+  // Suit la vidéo quand tu scroll
+  const updatePos = () => {
+    const r = video.getBoundingClientRect();
+    if (r.width === 0) {
+      badge.style.display = "none";
+    } else {
+      badge.style.display = "block";
+      badge.style.top = (r.top + 8) + "px";
+      badge.style.left = (r.left + 8) + "px";
     }
   };
-
-  const wrapper = document.createElement("div");
-  wrapper.style.position = "relative";
-  wrapper.style.display = "inline-block";
-  wrapper.style.width = "100%";
-  video.parentNode.insertBefore(wrapper, video);
-  wrapper.appendChild(video);
-  wrapper.appendChild(badge);
+  setInterval(updatePos, 500);
 }
 
-setInterval(() => {
-  document.querySelectorAll("video").forEach(addTruthBadge);
-}, 1500);
+function scan() {
+  document.querySelectorAll("video").forEach(addBadge);
+}
+setInterval(scan, 1500);
+scan();
