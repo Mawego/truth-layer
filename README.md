@@ -1,4 +1,8 @@
 # Truth Layer - Real-time AI Video Detection
+## Demo Video (3 min)
+https://youtu.be/CaOzvCQWgqA
+
+[![Demo](https://img.shields.io/badge/Demo-YouTube-red)](https://youtu.be/CaOzvCQWgqA)
 
 ![logo](extension/icon128.png)
 
